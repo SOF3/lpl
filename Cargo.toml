@@ -1,0 +1,24 @@
+[package]
+name = "lpl"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0"
+
+[dependencies]
+anyhow = "1.0.75"
+arcstr = "1.1.5"
+async-stream = "0.3.5"
+bitflags = "2.4.1"
+chrono = "0.4.31"
+clap = { version = "4.4.6", features = ["derive", "cargo"] }
+crossterm = "0.27.0"
+csv = "1.3.0"
+ctrlc = "3.4.1"
+futures = "0.3.28"
+ordered-float = "4.1.1"
+portrait = "0.3.0"
+ratatui = "0.24.0"
+serde = { version = "1.0.189", features = ["derive"] }
+serde_json = { version = "1.0.107", features = ["raw_value"] }
+tokio = { version = "1.33.0", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }
+tokio-util = "0.7.9"
