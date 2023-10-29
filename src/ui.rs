@@ -65,6 +65,7 @@ struct Context {
 #[portrait::make]
 trait LayerTrait {
     fn render(&mut self, context: &mut Context, frame: &mut ratatui::Frame);
+
     #[portrait(derive_delegate(reduce = |_, _| unreachable!()))]
     fn handle_input(
         &mut self,

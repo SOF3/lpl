@@ -96,9 +96,13 @@ impl LayerTrait for LayerWarn {
             }
 
             let mut title = vec![text::Span::raw("Warnings")];
+
+            let scroll_pos = src.len().saturating_sub(self.offset);
+            let scroll_size = src.len();
+
             if self.offset > 0 {
                 title.push(text::Span::styled(
-                    format!(" [{}/{}]", src.len().saturating_sub(self.offset), src.len(),),
+                    format!(" [{scroll_pos}/{scroll_size}]"),
                     Style::default().light_blue(),
                 ))
             }
@@ -124,7 +128,14 @@ impl LayerTrait for LayerWarn {
                         .border_style(border_style),
                 ),
                 rect,
-            )
+            );
+
+            let mut state = widgets::ScrollbarState::new(scroll_size).position(scroll_pos);
+            frame.render_stateful_widget(
+                widgets::Scrollbar::new(widgets::ScrollbarOrientation::VerticalRight),
+                rect.inner(&layout::Margin { vertical: 1, horizontal: 0 }),
+                &mut state,
+            );
         }
     }
 
