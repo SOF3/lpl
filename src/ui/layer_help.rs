@@ -8,7 +8,15 @@ use ratatui::{layout, text, widgets};
 use super::{center_subrect, Context, HandleInput, LayerCommand, LayerTrait};
 
 const HELP_INFO: &[(&str, &[(&str, &str)])] = &[
-    ("Main", &[("?", "Display this menu"), ("q", "Exit the application"), ("w", "Focus warnings")]),
+    (
+        "Main",
+        &[
+            ("?", "Display this menu"),
+            ("q", "Exit the application"),
+            ("w", "Focus warnings"),
+            ("SPACE", "Pause data"),
+        ],
+    ),
     (
         "Warnings",
         &[

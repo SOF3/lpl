@@ -107,7 +107,7 @@ async fn main_loop(
 
     let mut warnings = Some(warnings);
 
-    let mut layers = vec![Layer::Base(LayerChart {}), Layer::Warn(LayerWarn::default())];
+    let mut layers = vec![Layer::Base(LayerChart::default()), Layer::Warn(LayerWarn::default())];
     let mut layer_cmds: Vec<LayerCommand> = Vec::new();
 
     loop {
@@ -146,7 +146,8 @@ async fn main_loop(
             },
             message = input.next() => {
                 let Some(message) = message else { return Ok(()) };
-                context.data.handle_message(message);
+                context.data.trim(SystemTime::now() - context.options.data_backlog_duration);
+                context.data.push_message(message);
             },
             (warning_time, warning_msg) = util::some_or_pending(&mut warnings).fuse() => {
                 if context.warnings.len() >= context.options.warning_backlog_size {

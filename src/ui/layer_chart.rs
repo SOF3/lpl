@@ -1,4 +1,4 @@
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyEvent};
@@ -6,6 +6,7 @@ use ordered_float::OrderedFloat;
 use ratatui::style::{Style, Stylize as _};
 use ratatui::{layout, text, widgets};
 
+use super::data::Data;
 use super::layer_help::LayerHelp;
 use super::{Context, HandleInput, Layer, LayerCommand, LayerTrait};
 
@@ -28,14 +29,27 @@ const DEFAULT_PALETTE: &[fn(Style) -> Style] = &[
     Style::black,
 ];
 
-pub struct LayerChart {}
+#[derive(Default)]
+pub struct LayerChart {
+    freeze: Option<Box<Freeze>>,
+}
+
+struct Freeze {
+    frozen: SystemTime,
+    data:   Data,
+}
 
 impl LayerTrait for LayerChart {
     fn render(&mut self, context: &mut Context, frame: &mut ratatui::Frame) {
-        context.data.trim(SystemTime::now() - context.options.data_backlog_duration);
+        let (now, data) = match &self.freeze {
+            Some(freeze) => (freeze.frozen, &freeze.data),
+            None => {
+                context.data.trim(SystemTime::now() - context.options.data_backlog_duration);
+                (SystemTime::now(), &context.data)
+            }
+        };
 
-        let data_vecs: Vec<_> = context
-            .data
+        let data_vecs: Vec<_> = data
             .series_map
             .iter()
             .map(|(label, series)| {
@@ -43,10 +57,7 @@ impl LayerTrait for LayerChart {
                     .data
                     .iter()
                     .map(|datum| {
-                        let x = -SystemTime::now()
-                            .duration_since(datum.time)
-                            .unwrap_or(Duration::default())
-                            .as_secs_f64();
+                        let x = -now.duration_since(datum.time).unwrap_or_default().as_secs_f64();
                         let y = datum.value;
                         (x, y)
                     })
@@ -125,6 +136,16 @@ impl LayerTrait for LayerChart {
             }
             Event::Key(KeyEvent { code: event::KeyCode::Char('?'), .. }) => {
                 layer_cmds.push(LayerCommand::Insert(Layer::Help(LayerHelp), 1));
+                return Ok(HandleInput::Consumed);
+            }
+            Event::Key(KeyEvent { code: event::KeyCode::Char(' '), .. }) => {
+                self.freeze = match self.freeze {
+                    Some(_) => None,
+                    None => Some(Box::new(Freeze {
+                        frozen: SystemTime::now(),
+                        data:   context.data.clone(),
+                    })),
+                };
                 return Ok(HandleInput::Consumed);
             }
             _ => {}
