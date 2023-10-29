@@ -15,6 +15,13 @@ const HELP_INFO: &[(&str, &[(&str, &str)])] = &[
             ("q", "Exit the application"),
             ("w", "Focus warnings"),
             ("SPACE", "Pause data"),
+            ("-", "Zoom out (0.5x)"),
+            ("=", "Zoom in (2x)"),
+            ("h", "Move viewport leftwards by 10%"),
+            ("H", "Move viewport leftwards by 50%"),
+            ("l", "Move viewport rightwards by 10%"),
+            ("L", "Move viewport rightwards by 50%"),
+            ("r", "Reset viewport to the full backlog range"),
         ],
     ),
     (

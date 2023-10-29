@@ -108,7 +108,8 @@ async fn main_loop(
 
     let mut warnings = Some(warnings);
 
-    let mut layers = vec![Layer::Base(LayerChart::default()), Layer::Warn(LayerWarn::default())];
+    let mut layers =
+        vec![Layer::Base(LayerChart::new(&context.options)), Layer::Warn(LayerWarn::default())];
     let mut layer_cmds: Vec<LayerCommand> = Vec::new();
 
     loop {
