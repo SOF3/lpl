@@ -63,8 +63,8 @@ impl LayerTrait for LayerChart {
         let data_vecs: Vec<_> = data
             .series_map
             .iter()
-            .map(|(label, series)| {
-                let data: Vec<_> = series
+            .filter_map(|(label, series)| {
+                let mut data: Vec<_> = series
                     .data
                     .iter()
                     .filter(|datum| (x_start..=x_end).contains(&datum.time))
@@ -78,7 +78,12 @@ impl LayerTrait for LayerChart {
                         (x, y)
                     })
                     .collect();
-                (label.clone(), data)
+                if let Some(&(_, y)) = data.last() {
+                    data.push((x_interval.as_secs_f64(), y));
+                    Some((format!("{label}: {}", disp_float(y, 4)), data))
+                } else {
+                    None
+                }
             })
             .collect();
         let datasets = data_vecs
@@ -129,7 +134,11 @@ impl LayerTrait for LayerChart {
                             .collect(),
                     )
                     .style(Style::default().white()),
-            );
+            )
+            .hidden_legend_constraints((
+                layout::Constraint::Percentage(100),
+                layout::Constraint::Percentage(100),
+            ));
         frame.render_widget(chart, rect.inner(&layout::Margin { vertical: 1, horizontal: 0 }));
 
         let x_start_display = self.x_start.min(context.options.data_backlog_duration);

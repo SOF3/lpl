@@ -10,6 +10,7 @@ use futures::channel::mpsc;
 use futures::{select, FutureExt, StreamExt as _};
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::{layout, Terminal};
+use tokio::time;
 use tokio_util::sync::CancellationToken;
 
 use crate::input::Input;
@@ -157,6 +158,7 @@ async fn main_loop(
                 }
                 context.warnings.push_back((warning_time, warning_msg.into()));
             }
+            _ = time::sleep(Duration::from_millis(200)).fuse() => {} // ensure minimal frame updates
         }
     }
 }
