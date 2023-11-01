@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 use std::thread;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 use anyhow::{Context as _, Result};
 use arcstr::ArcStr;
@@ -113,14 +113,20 @@ async fn main_loop(
         vec![Layer::Base(LayerChart::new(&context.options)), Layer::Warn(LayerWarn::default())];
     let mut layer_cmds: Vec<LayerCommand> = Vec::new();
 
-    loop {
-        terminal.draw(|frame| {
-            for layer in &mut layers {
-                layer.render(&mut context, frame);
-            }
-        })?;
+    let redraw_freq = Duration::from_millis(200);
+    let mut redraw = true;
+    let mut last_message_redraw = Instant::now();
 
-        select! {
+    loop {
+        if redraw {
+            terminal.draw(|frame| {
+                for layer in &mut layers {
+                    layer.render(&mut context, frame);
+                }
+            })?;
+        }
+
+        redraw = select! {
             _ = context.cancel.cancelled().fuse() => return Ok(()),
             event = util::some_or_pending(&mut events).fuse() => {
                 for i in (0..layers.len()).rev() {
@@ -146,20 +152,35 @@ async fn main_loop(
                         break;
                     }
                 }
+                true
             },
             message = input.next() => {
                 let Some(message) = message else { return Ok(()) };
                 context.data.trim(SystemTime::now() - context.options.data_backlog_duration);
                 context.data.push_message(message);
+
+                if last_message_redraw.elapsed() < redraw_freq {
+                    false
+                } else {
+                    last_message_redraw = Instant::now();
+                    true
+                }
             },
             (warning_time, warning_msg) = util::some_or_pending(&mut warnings).fuse() => {
                 if context.warnings.len() >= context.options.warning_backlog_size {
                     _ = context.warnings.pop_front();
                 }
                 context.warnings.push_back((warning_time, warning_msg.into()));
+
+                if last_message_redraw.elapsed() < redraw_freq {
+                    false
+                } else {
+                    last_message_redraw = Instant::now();
+                    true
+                }
             }
-            _ = time::sleep(Duration::from_millis(200)).fuse() => {} // ensure minimal frame updates
-        }
+            _ = time::sleep(redraw_freq).fuse() => true // ensure redraw as time elapses
+        };
     }
 }
 
