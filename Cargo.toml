@@ -14,8 +14,12 @@ clap = { version = "4.4.6", features = ["derive", "cargo"] }
 crossterm = "0.27.0"
 csv = "1.3.0"
 ctrlc = "3.4.1"
+flexi_logger = "0.27.2"
 futures = "0.3.28"
+log = "0.4.20"
+notify = "6.1.1"
 ordered-float = "4.1.1"
+parking_lot = "0.12.1"
 portrait = "0.3.0"
 ratatui = "0.24.0"
 serde = { version = "1.0.189", features = ["derive"] }

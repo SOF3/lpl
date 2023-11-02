@@ -19,16 +19,16 @@ pub struct Options {
     #[clap(long)]
     pub csv:       Vec<PathBuf>,
     /// Poll new changes from a CSV file periodically.
-    #[clap(long, num_args = 2)]
+    #[clap(long)]
     pub csv_poll:  Vec<options::Named<PathBuf>>,
-    /// Read inputs from a JSON Lines stream.
+    /// Read inputs from a JSONLines stream.
     #[clap(long)]
     pub json:      Vec<PathBuf>,
     /// Poll new changes from a JSON file periodically.
-    #[clap(long, num_args = 2)]
-    pub json_poll: Vec<options::Named<PathBuf>>,
+    #[clap(long)]
+    pub json_poll: Vec<PathBuf>,
 
-    /// The frequency of polling files for *-poll options in seconds.
+    /// The frequency of polling files for *-poll inputs in seconds.
     #[arg(long, value_parser = |v: &str| v.parse::<f32>().map(Duration::from_secs_f32), default_value = "1")]
     pub poll_period: Duration,
 }
@@ -37,9 +37,11 @@ impl Options {
     pub async fn open(&self, cancel: &CancellationToken) -> Result<Input> {
         let (input_send, input_recv) = mpsc::channel(0);
         let (warn_send, warn_recv) = mpsc::channel(16);
-        let warn_send = WarningSender { prefix: ArcStr::default(), sender: warn_send };
+        let warnings = WarningSender { prefix: ArcStr::default(), sender: warn_send };
 
         let mut workers = Vec::new();
+
+        let watcher = notifier::start(warnings.with_prefix("inotify: "))?;
 
         for path in &self.json {
             let worker = json::open(path.clone(), &input_send)
@@ -48,8 +50,14 @@ impl Options {
             workers.push((path, worker));
         }
 
+        for path in &self.json_poll {
+            let worker =
+                json::open_poll(path.clone(), self.poll_period, &watcher, &input_send).await?;
+            workers.push((path, worker));
+        }
+
         for (path, worker) in workers {
-            let mut warn_send = warn_send.with_prefix(&format!("{}: ", path.display()));
+            let mut warn_send = warnings.with_prefix(&format!("{}: ", path.display()));
 
             let worker = worker(warn_send.clone(), cancel.clone());
             tokio::spawn(async move {
@@ -96,6 +104,8 @@ type Worker = Pin<Box<dyn Future<Output = Result<()>> + Send>>;
 
 // mod csv;
 mod json;
+
+mod notifier;
 
 /// Workaround for tokio workers unable to perform non-blocking reads on non-regular files.
 async fn thread_line_reader(

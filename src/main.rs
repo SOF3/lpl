@@ -1,5 +1,6 @@
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use clap::Parser as _;
+use flexi_logger::FileSpec;
 use tokio_util::sync::CancellationToken;
 
 mod input;
@@ -10,6 +11,13 @@ pub mod util;
 #[tokio::main]
 async fn main() -> Result<()> {
     let options = options::Options::parse();
+    if options.log {
+        flexi_logger::Logger::try_with_env()
+            .context("parse RUST_LOG")?
+            .log_to_file(FileSpec::default())
+            .start()
+            .context("logger setup")?;
+    }
 
     let cancel = CancellationToken::new();
     let input = options.inputs.open(&cancel).await?;
