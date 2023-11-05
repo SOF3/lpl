@@ -13,7 +13,7 @@ use ratatui::{layout, Terminal};
 use tokio::time;
 use tokio_util::sync::CancellationToken;
 
-use crate::input::Input;
+use crate::input::{Input, WarningSender};
 use crate::util;
 
 mod layer_chart;
@@ -57,10 +57,11 @@ pub async fn run(options: Options, input: Input, cancel: CancellationToken) -> R
 }
 
 struct Context {
-    options:  Options,
-    cancel:   CancellationToken,
-    warnings: VecDeque<(SystemTime, ArcStr)>,
-    data:     Data,
+    options:        Options,
+    cancel:         CancellationToken,
+    warnings:       VecDeque<(SystemTime, ArcStr)>,
+    warning_sender: WarningSender,
+    data:           Data,
 }
 
 #[portrait::make]
@@ -97,7 +98,7 @@ async fn main_loop(
     options: Options,
     cancel: CancellationToken,
     terminal: &mut Terminal<impl Backend>,
-    Input { mut input, warnings }: Input,
+    Input { mut input, warnings, warning_sender }: Input,
 ) -> Result<()> {
     let mut events = {
         let (send, recv) = mpsc::unbounded();
@@ -105,7 +106,13 @@ async fn main_loop(
         Some(recv)
     };
 
-    let mut context = Context { options, cancel, warnings: VecDeque::new(), data: Data::default() };
+    let mut context = Context {
+        options,
+        cancel,
+        warnings: VecDeque::new(),
+        warning_sender,
+        data: Data::default(),
+    };
 
     let mut warnings = Some(warnings);
 

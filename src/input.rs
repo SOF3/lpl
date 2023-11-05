@@ -67,7 +67,11 @@ impl Options {
             });
         }
 
-        Ok(Input { input: input_recv, warnings: warn_recv })
+        Ok(Input {
+            input:          input_recv,
+            warnings:       warn_recv,
+            warning_sender: warnings,
+        })
     }
 }
 
@@ -78,18 +82,19 @@ pub struct WarningSender {
 }
 
 impl WarningSender {
-    fn send(&mut self, message: String) {
+    pub fn send(&mut self, message: String) {
         let _ = self.sender.try_send((SystemTime::now(), format!("{}{message}", &self.prefix)));
     }
 
-    fn with_prefix(&self, prefix: &str) -> Self {
+    pub fn with_prefix(&self, prefix: &str) -> Self {
         Self { prefix: arcstr::format!("{prefix}{}", &self.prefix), sender: self.sender.clone() }
     }
 }
 
 pub struct Input {
-    pub input:    mpsc::Receiver<Message>,
-    pub warnings: mpsc::Receiver<(SystemTime, String)>,
+    pub input:          mpsc::Receiver<Message>,
+    pub warnings:       mpsc::Receiver<(SystemTime, String)>,
+    pub warning_sender: WarningSender,
 }
 
 #[derive(Debug)]

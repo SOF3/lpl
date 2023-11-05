@@ -1,31 +1,31 @@
 use std::time::{Duration, SystemTime};
 
 use anyhow::Result;
+use chrono::DateTime;
 use crossterm::event::{self, Event, KeyEvent};
+use plotters::coord;
+use plotters::prelude::{ChartBuilder, DrawingArea};
+use plotters::series::LineSeries;
+use plotters::style::{IntoTextStyle, RGBColor, WHITE};
+use plotters_ratatui_backend::{AreaResult, Draw, PlottersWidget, RatatuiBackend};
 use ratatui::style::{Style, Stylize as _};
-use ratatui::{layout, text, widgets};
+use ratatui::{layout, widgets};
 
-use super::data::Data;
+use super::data::{Data, Datum};
 use super::layer_help::LayerHelp;
 use super::{Context, HandleInput, Layer, LayerCommand, LayerTrait, Options};
 
-const DEFAULT_PALETTE: &[fn(Style) -> Style] = &[
-    Style::white,
-    Style::light_cyan,
-    Style::light_magenta,
-    Style::light_blue,
-    Style::light_yellow,
-    Style::light_green,
-    Style::light_red,
-    Style::dark_gray,
-    Style::gray,
-    Style::cyan,
-    Style::magenta,
-    Style::blue,
-    Style::yellow,
-    Style::green,
-    Style::red,
-    Style::black,
+const DEFAULT_COLOR_MAP: &[RGBColor] = &[
+    // Source: Set1 from matplotlib
+    RGBColor(228, 26, 28),
+    RGBColor(55, 126, 184),
+    RGBColor(77, 175, 74),
+    RGBColor(152, 78, 163),
+    RGBColor(255, 127, 0),
+    RGBColor(255, 255, 51),
+    RGBColor(166, 86, 40),
+    RGBColor(247, 129, 191),
+    RGBColor(153, 153, 153),
 ];
 
 pub struct LayerChart {
@@ -46,6 +46,88 @@ struct Freeze {
     data:   Data,
 }
 
+struct DrawImpl<'t> {
+    now:     SystemTime,
+    x_start: Duration,
+    x_end:   Duration,
+    data:    &'t Data,
+}
+
+impl<'t> Draw for DrawImpl<'t> {
+    fn draw(&self, area: DrawingArea<RatatuiBackend, coord::Shift>) -> AreaResult {
+        let x_start_at = self.now - self.x_start;
+        let x_end_at = self.now - self.x_end;
+
+        let mut global_y_extrema = None::<(f64, f64)>;
+        let mut to_draw = Vec::new();
+
+        for (i, (label, series)) in self.data.series_map.iter().enumerate() {
+            let series =
+                series.data.iter().filter(|datum| (x_start_at..=x_end_at).contains(&datum.time));
+            let Some(&Datum { value: last_y, .. }) = series.clone().next_back() else { continue };
+
+            let (y_min, y_max) = series
+                .clone()
+                .fold(None::<(f64, f64)>, |state, &Datum { value: y, .. }| {
+                    let Some((min, max)) = state else { return Some((y, y)) };
+                    Some((min.min(y), max.max(y)))
+                })
+                .unwrap_or((0.0, 1.0));
+            {
+                let (global_y_min, global_y_max) =
+                    &mut global_y_extrema.get_or_insert((y_min, y_max));
+                *global_y_min = (*global_y_min).min(y_min);
+                *global_y_max = (*global_y_max).max(y_max);
+            }
+
+            let points = series.map(|datum| {
+                let x = self
+                    .now
+                    .duration_since(datum.time)
+                    .expect("time should be in the past")
+                    .as_secs_f64();
+                let y = datum.value;
+                (-x, y)
+            });
+            let color = DEFAULT_COLOR_MAP[i % DEFAULT_COLOR_MAP.len()];
+            let disp_label = format!("{label}: {}", disp_float(last_y, 4));
+            to_draw.push((points, color, disp_label));
+        }
+
+        let x_range = (-self.x_start.as_secs_f64())..(-self.x_end.as_secs_f64());
+        let y_range = global_y_extrema.map_or(0.0..1.0, |(min, max)| min..max);
+
+        let mut chart = ChartBuilder::on(&area)
+            .margin_left(24)
+            .margin_bottom(12)
+            .set_left_and_bottom_label_area_size(1)
+            .build_cartesian_2d(x_range, y_range)?;
+
+        for (points, color, disp_label) in to_draw {
+            chart.draw_series(LineSeries::new(points, color))?.label(disp_label);
+        }
+
+        chart
+            .configure_mesh()
+            .disable_mesh()
+            .axis_style(WHITE)
+            .label_style("".with_color(WHITE))
+            .x_label_formatter(&|&value| {
+                DateTime::<chrono::Local>::from(self.now - Duration::from_secs_f64(-value))
+                    .format("%H:%M:%S")
+                    .to_string()
+            })
+            .draw()?;
+        chart
+            .configure_series_labels()
+            .border_style(WHITE)
+            .label_font("".with_color(WHITE))
+            .draw()?;
+
+        Ok(())
+    }
+}
+
 impl LayerTrait for LayerChart {
     fn render(&mut self, context: &mut Context, frame: &mut ratatui::Frame) {
         let (now, data) = match &self.freeze {
@@ -56,89 +138,13 @@ impl LayerTrait for LayerChart {
             }
         };
 
-        let x_start = now - self.x_start;
-        let x_end = now - self.x_end;
-        let x_interval = self.x_start - self.x_end;
-
-        let data_vecs: Vec<_> = data
-            .series_map
-            .iter()
-            .filter_map(|(label, series)| {
-                let mut data: Vec<_> = series
-                    .data
-                    .iter()
-                    .filter(|datum| (x_start..=x_end).contains(&datum.time))
-                    .map(|datum| {
-                        let x = datum
-                            .time
-                            .duration_since(x_start)
-                            .expect("time contained in x_start..=x_end")
-                            .as_secs_f64();
-                        let y = datum.value;
-                        (x, y)
-                    })
-                    .collect();
-                if let Some(&(_, y)) = data.last() {
-                    data.push((x_interval.as_secs_f64(), y));
-                    Some((format!("{label}: {}", disp_float(y, 4)), data))
-                } else {
-                    None
-                }
-            })
-            .collect();
-        let datasets = data_vecs
-            .iter()
-            .filter(|(_, data)| !data.is_empty())
-            .enumerate()
-            .map(|(i, (label, data))| {
-                let style = DEFAULT_PALETTE[i % DEFAULT_PALETTE.len()](Style::default());
-
-                widgets::Dataset::default()
-                    .name(label)
-                    .data(data)
-                    .graph_type(widgets::GraphType::Line)
-                    .marker(ratatui::symbols::Marker::Braille)
-                    .style(style)
-            })
-            .collect();
-
-        let (y_min, y_max) = data_vecs
-            .iter()
-            .flat_map(|(_, data)| data.iter().map(|&(_, y)| y))
-            .fold(None, |state, y| {
-                let Some((min, max)) = state else { return Some((y, y)) };
-                Some((min.min(y), max.max(y)))
-            })
-            .unwrap_or((0.0, 1.0));
-
+        let chart = PlottersWidget {
+            draw:          DrawImpl { now, x_start: self.x_start, x_end: self.x_end, data },
+            error_handler: |err| {
+                context.warning_sender.clone().send(format!("Plotting error: {err:?}"))
+            },
+        };
         let rect = frame.size();
-        let chart = widgets::Chart::new(datasets)
-            .x_axis(
-                widgets::Axis::default()
-                    .title("Time")
-                    .bounds([0.0, x_interval.as_secs_f64()])
-                    .labels(
-                        lerp_iter(-self.x_start.as_secs_f64(), -self.x_end.as_secs_f64(), 3)
-                            .map(|x| text::Span::raw(disp_float(x, 4)))
-                            .collect(),
-                    )
-                    .style(Style::default().white()),
-            )
-            .y_axis(
-                widgets::Axis::default()
-                    .title("Value")
-                    .bounds([y_min, y_max])
-                    .labels(
-                        lerp_iter(y_min, y_max, 3)
-                            .map(|y| text::Span::raw(disp_float(y, 4)))
-                            .collect(),
-                    )
-                    .style(Style::default().white()),
-            )
-            .hidden_legend_constraints((
-                layout::Constraint::Percentage(100),
-                layout::Constraint::Percentage(100),
-            ));
         frame.render_widget(chart, rect.inner(&layout::Margin { vertical: 1, horizontal: 0 }));
 
         let x_start_display = self.x_start.min(context.options.data_backlog_duration);
@@ -207,8 +213,8 @@ impl LayerTrait for LayerChart {
                     fn(Duration) -> Duration,
                     fn(Duration, Duration) -> Duration,
                 ) = match key {
-                    '-' => (|itv| itv * 2, |midpt, _| midpt),
-                    '=' => (|itv| itv / 2, |midpt, _| midpt),
+                    '-' => (|itv| itv * 5 / 4, |midpt, _| midpt),
+                    '=' => (|itv| itv * 4 / 5, |midpt, _| midpt),
                     'h' => (|itv| itv, |midpt, itv| midpt + itv / 10),
                     'l' => (|itv| itv, |midpt, itv| midpt.saturating_sub(itv / 10)),
                     'H' => (|itv| itv, |midpt, itv| midpt + itv / 2),
@@ -238,15 +244,7 @@ impl LayerTrait for LayerChart {
     }
 }
 
-fn lerp(a: f64, b: f64, ratio: f64) -> f64 { a + (b - a) * ratio }
-
 fn unlerp(a: f64, b: f64, v: f64) -> f64 { (v - a) / (b - a) }
-
-fn lerp_iter(a: f64, b: f64, steps: u16) -> impl Iterator<Item = f64> {
-    (0..steps)
-        .map(move |step| f64::from(step) / f64::from(steps - 1))
-        .map(move |ratio| lerp(a, b, ratio))
-}
 
 fn disp_float(value: f64, digits: u32) -> String {
     if value == 0.0 {
