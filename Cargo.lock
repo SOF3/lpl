@@ -1215,9 +1215,7 @@ dependencies = [
 
 [[package]]
 name = "plotters-ratatui-backend"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dd55170bc21e4e0841f580fa4703794c73f18c9274c9a51b07f88ee6305ed26"
+version = "0.1.1"
 dependencies = [
  "log",
  "plotters",

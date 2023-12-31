@@ -4,7 +4,7 @@ use anyhow::{Context as _, Error, Result};
 
 use crate::{input, ui};
 
-#[derive(clap::Parser)]
+#[derive(Debug, clap::Parser)]
 pub struct Options {
     /// Write logs to current directory.
     #[arg(long)]

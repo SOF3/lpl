@@ -17,6 +17,7 @@ async fn main() -> Result<()> {
             .log_to_file(FileSpec::default())
             .start()
             .context("logger setup")?;
+        log::info!("start with options: {options:?}");
     }
 
     let cancel = CancellationToken::new();

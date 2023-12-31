@@ -12,7 +12,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::options;
 
-#[derive(clap::Args)]
+#[derive(Debug, clap::Args)]
 #[group(id = "Inputs")]
 pub struct Options {
     /// Read inputs from a CSV stream with an initial header line..

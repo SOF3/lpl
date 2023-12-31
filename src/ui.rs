@@ -25,7 +25,7 @@ use layer_warn::LayerWarn;
 mod data;
 use data::Data;
 
-#[derive(clap::Args)]
+#[derive(Debug, clap::Args)]
 #[group(id = "UI")]
 pub struct Options {
     /// Number of warnings to keep in backlog.

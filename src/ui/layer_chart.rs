@@ -7,13 +7,15 @@ use plotters::coord;
 use plotters::prelude::{ChartBuilder, DrawingArea};
 use plotters::series::LineSeries;
 use plotters::style::{IntoTextStyle, RGBColor, WHITE};
-use plotters_ratatui_backend::{AreaResult, Draw, PlottersWidget, RatatuiBackend};
+use plotters_ratatui_backend::{AreaResult, Draw, PlottersWidget, RatatuiBackend, CHAR_PIXEL_SIZE};
 use ratatui::style::{Style, Stylize as _};
 use ratatui::{layout, widgets};
 
 use super::data::{Data, Datum};
 use super::layer_help::LayerHelp;
 use super::{Context, HandleInput, Layer, LayerCommand, LayerTrait, Options};
+
+fn legend_label_size() -> u32 { ((CHAR_PIXEL_SIZE as f64) / 1.25).round() as u32 }
 
 const DEFAULT_COLOR_MAP: &[RGBColor] = &[
     // Source: Set1 from matplotlib
@@ -55,6 +57,12 @@ struct DrawImpl<'t> {
 
 impl<'t> Draw for DrawImpl<'t> {
     fn draw(&self, area: DrawingArea<RatatuiBackend, coord::Shift>) -> AreaResult {
+        struct ToDraw<PointsIter: Iterator<Item = (f64, f64)>> {
+            points:     PointsIter,
+            color:      RGBColor,
+            disp_label: String,
+        }
+
         let x_start_at = self.now - self.x_start;
         let x_end_at = self.now - self.x_end;
 
@@ -91,11 +99,14 @@ impl<'t> Draw for DrawImpl<'t> {
             });
             let color = DEFAULT_COLOR_MAP[i % DEFAULT_COLOR_MAP.len()];
             let disp_label = format!("{label}: {}", disp_float(last_y, 4));
-            to_draw.push((points, color, disp_label));
+            to_draw.push(ToDraw { points, color, disp_label });
         }
 
         let x_range = (-self.x_start.as_secs_f64())..(-self.x_end.as_secs_f64());
         let y_range = global_y_extrema.map_or(0.0..1.0, |(min, max)| min..max);
+
+        let max_legend_len =
+            to_draw.iter().map(|series| series.disp_label.len()).max().unwrap_or(0);
 
         let mut chart = ChartBuilder::on(&area)
             .margin_left(24)
@@ -103,15 +114,17 @@ impl<'t> Draw for DrawImpl<'t> {
             .set_left_and_bottom_label_area_size(1)
             .build_cartesian_2d(x_range, y_range)?;
 
-        for (points, color, disp_label) in to_draw {
-            chart.draw_series(LineSeries::new(points, color))?.label(disp_label);
+        for ToDraw { points, color, disp_label } in to_draw {
+            chart.draw_series(LineSeries::new(points, color))?.label(disp_label).legend(
+                move |(x, y)| plotters::element::PathElement::new([(x, y), (x + 10, y)], color),
+            );
         }
 
         chart
             .configure_mesh()
             .disable_mesh()
             .axis_style(WHITE)
-            .label_style("".with_color(WHITE))
+            .label_style(("", CHAR_PIXEL_SIZE).with_color(WHITE))
             .x_label_formatter(&|&value| {
                 DateTime::<chrono::Local>::from(self.now - Duration::from_secs_f64(-value))
                     .format("%H:%M:%S")
@@ -121,7 +134,8 @@ impl<'t> Draw for DrawImpl<'t> {
         chart
             .configure_series_labels()
             .border_style(WHITE)
-            .label_font("".with_color(WHITE))
+            .label_font(("", legend_label_size()).with_color(WHITE))
+            .legend_area_size(CHAR_PIXEL_SIZE * (max_legend_len + 2) as u32)
             .draw()?;
 
         Ok(())

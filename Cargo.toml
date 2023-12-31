@@ -21,7 +21,7 @@ notify = "6.1.1"
 ordered-float = "4.1.1"
 parking_lot = "0.12.1"
 plotters = "0.3.5"
-plotters-ratatui-backend = "0.1.0"
+plotters-ratatui-backend = {version = "0.1.0", path = "../plotters-ratatui-backend"}
 portrait = "0.3.0"
 ratatui = "0.24.0"
 serde = { version = "1.0.189", features = ["derive"] }
