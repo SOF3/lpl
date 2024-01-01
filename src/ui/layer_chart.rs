@@ -12,7 +12,7 @@ use plotters_ratatui_backend::{AreaResult, Draw, PlottersWidget, RatatuiBackend,
 use ratatui::style::{Style, Stylize as _};
 use ratatui::{layout, widgets};
 
-use super::data::{Freezable, Cache};
+use super::data::{Cache, Freezable};
 use super::layer_help::LayerHelp;
 use super::{Context, HandleInput, Layer, LayerCommand, LayerTrait, Options};
 

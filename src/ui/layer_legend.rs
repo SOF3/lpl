@@ -7,28 +7,30 @@ use ratatui::text::Text;
 use ratatui::{layout, style, widgets};
 
 use super::{Context, HandleInput, LayerCommand, LayerTrait};
-use crate::util::{self, disp_float, AnchoredPosition, Gravity, SaturatingSubExt, SaturatingAddExt};
+use crate::util::{
+    self, disp_float, AnchoredPosition, Gravity, SaturatingAddExt, SaturatingSubExt,
+};
 
 pub struct LayerLegend {
-    position:      AnchoredPosition,
-    layer_focused: bool,
-    series_focus:  Option<String>,
+    position:       AnchoredPosition,
+    layer_focused:  bool,
+    series_focus:   Option<String>,
     changing_color: bool,
-    last_dim: (u16, u16),
+    last_dim:       (u16, u16),
 }
 
 impl Default for LayerLegend {
     fn default() -> Self {
         Self {
-            position:      AnchoredPosition {
+            position:       AnchoredPosition {
                 anchor:     Gravity::TOP | Gravity::RIGHT,
                 x_displace: 0,
                 y_displace: 0,
             },
-            layer_focused: false,
-            series_focus:  None,
+            layer_focused:  false,
+            series_focus:   None,
             changing_color: false,
-            last_dim:      (0, 0),
+            last_dim:       (0, 0),
         }
     }
 }
@@ -104,15 +106,25 @@ impl LayerTrait for LayerLegend {
         frame_size: layout::Rect,
     ) -> Result<HandleInput> {
         if self.changing_color {
-            if let &Event::Key(KeyEvent { code: event::KeyCode::Char(key @ ('r' | 'R' | 'g' | 'G' | 'b' | 'B')), .. }) = event {
+            if let &Event::Key(KeyEvent {
+                code: event::KeyCode::Char(key @ ('r' | 'R' | 'g' | 'G' | 'b' | 'B')),
+                ..
+            }) = event
+            {
                 self.changing_color = false;
 
                 let Some(name) = self.series_focus.as_deref() else {
-                    context.warning_sender.send(String::from("Cannot change color code because no series is selected"));
+                    context.warning_sender.send(String::from(
+                        "Cannot change color code because no series is selected",
+                    ));
                     return Ok(HandleInput::Consumed);
                 };
 
-                let color = context.cache.colors.get_mut(name).expect("existing series name should have corresponding color entry");
+                let color = context
+                    .cache
+                    .colors
+                    .get_mut(name)
+                    .expect("existing series name should have corresponding color entry");
                 match key {
                     'r' => color[0].saturating_add_assign(5),
                     'R' => color[0].saturating_sub_assign(5),
@@ -123,7 +135,7 @@ impl LayerTrait for LayerLegend {
                     _ => unreachable!(),
                 }
 
-                return Ok(HandleInput::Consumed)
+                return Ok(HandleInput::Consumed);
             }
         }
 

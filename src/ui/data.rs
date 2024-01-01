@@ -14,11 +14,8 @@ impl Cache {
     pub fn push_message(&mut self, message: input::Message) {
         self.colors.entry(message.label.clone()).or_insert_with(|| self.color_pool.next());
 
-        let series = self
-            .data
-            .map
-            .entry(message.label)
-            .or_insert_with(|| Series { data: VecDeque::new() });
+        let series =
+            self.data.map.entry(message.label).or_insert_with(|| Series { data: VecDeque::new() });
         series.data.push_back(Datum { time: message.time, value: message.value });
     }
 
@@ -39,7 +36,7 @@ pub struct Freezable {
 
 #[derive(Clone)]
 pub struct Series {
-    pub data:  VecDeque<Datum>,
+    pub data: VecDeque<Datum>,
 }
 
 #[derive(Clone)]

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use futures::future::pending;
 use futures::{Stream, StreamExt as _};
-use num_traits::{SaturatingSub, SaturatingAdd};
+use num_traits::{SaturatingAdd, SaturatingSub};
 use ratatui::layout;
 
 pub struct Finally<T, F: FnOnce(T) -> Result<()>>(pub Option<(T, F)>);
