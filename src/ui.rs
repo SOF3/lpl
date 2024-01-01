@@ -20,10 +20,12 @@ mod layer_chart;
 use layer_chart::LayerChart;
 mod layer_help;
 use layer_help::LayerHelp;
+mod layer_legend;
+use layer_legend::LayerLegend;
 mod layer_warn;
 use layer_warn::LayerWarn;
 mod data;
-use data::Data;
+use data::Cache;
 
 #[derive(Debug, clap::Args)]
 #[group(id = "UI")]
@@ -57,11 +59,12 @@ pub async fn run(options: Options, input: Input, cancel: CancellationToken) -> R
 }
 
 struct Context {
-    options:        Options,
-    cancel:         CancellationToken,
-    warnings:       VecDeque<(SystemTime, ArcStr)>,
-    warning_sender: WarningSender,
-    data:           Data,
+    options:         Options,
+    cancel:          CancellationToken,
+    warnings:        VecDeque<(SystemTime, ArcStr)>,
+    warning_sender:  WarningSender,
+    cache:           Cache,
+    current_targets: Option<Vec<layer_chart::DrawTarget>>,
 }
 
 #[portrait::make]
@@ -74,6 +77,7 @@ trait LayerTrait {
         context: &mut Context,
         event: &Event,
         layer_cmds: &mut Vec<LayerCommand>,
+        frame_size: layout::Rect,
     ) -> Result<HandleInput>;
 }
 
@@ -87,6 +91,7 @@ enum Layer {
     Base(LayerChart),
     Warn(LayerWarn),
     Help(LayerHelp),
+    Legend(LayerLegend),
 }
 
 enum LayerCommand {
@@ -111,26 +116,32 @@ async fn main_loop(
         cancel,
         warnings: VecDeque::new(),
         warning_sender,
-        data: Data::default(),
+        cache: Cache::default(),
+        current_targets: None,
     };
 
     let mut warnings = Some(warnings);
 
-    let mut layers =
-        vec![Layer::Base(LayerChart::new(&context.options)), Layer::Warn(LayerWarn::default())];
+    let mut layers = vec![
+        Layer::Base(LayerChart::new(&context.options)),
+        Layer::Legend(LayerLegend::default()),
+        Layer::Warn(LayerWarn::default()),
+    ];
     let mut layer_cmds: Vec<LayerCommand> = Vec::new();
 
     let redraw_freq = Duration::from_millis(200);
     let mut redraw = true;
     let mut last_message_redraw = Instant::now();
+    let mut last_area = None;
 
     loop {
         if redraw {
-            terminal.draw(|frame| {
+            let frame = terminal.draw(|frame| {
                 for layer in &mut layers {
                     layer.render(&mut context, frame);
                 }
             })?;
+            last_area = Some(frame.area);
         }
 
         redraw = select! {
@@ -138,7 +149,7 @@ async fn main_loop(
             event = util::some_or_pending(&mut events).fuse() => {
                 for i in (0..layers.len()).rev() {
                     let layer = layers.get_mut(i).unwrap();
-                    let flow = layer.handle_input(&mut context, &event, &mut layer_cmds)?;
+                    let flow = layer.handle_input(&mut context, &event, &mut layer_cmds, last_area.expect("redraw was true the first time"))?;
 
                     let mut removed = false;
                     for cmd in layer_cmds.drain(..) {
@@ -163,8 +174,8 @@ async fn main_loop(
             },
             message = input.next() => {
                 let Some(message) = message else { return Ok(()) };
-                context.data.trim(SystemTime::now() - context.options.data_backlog_duration);
-                context.data.push_message(message);
+                context.cache.trim(SystemTime::now() - context.options.data_backlog_duration);
+                context.cache.push_message(message);
 
                 if last_message_redraw.elapsed() < redraw_freq {
                     false
@@ -203,44 +214,4 @@ fn consume_events(cancel: CancellationToken, ch: mpsc::UnboundedSender<Event>) {
             }
         }
     });
-}
-
-fn center_subrect(rect: layout::Rect, ratio: (u16, u16)) -> layout::Rect {
-    let center_x = (rect.left() + rect.right()) / 2;
-    let center_y = (rect.top() + rect.bottom()) / 2;
-    let new_width = rect.width * ratio.0 / ratio.1;
-    let new_height = rect.height * ratio.0 / ratio.1;
-
-    let new_left = center_x - new_width / 2;
-    let new_top = center_y - new_height / 2;
-
-    layout::Rect { x: new_left, y: new_top, width: new_width, height: new_height }
-}
-
-bitflags::bitflags! {
-    pub struct Gravity: u8 {
-        const LEFT = 0;
-        const RIGHT = 1;
-        const TOP = 0;
-        const BOTTOM = 2;
-    }
-}
-
-pub fn rect_resize(
-    mut rect: layout::Rect,
-    gravity: Gravity,
-    mut width: u16,
-    mut height: u16,
-) -> layout::Rect {
-    width = width.min(rect.width);
-    height = height.min(rect.height);
-
-    if gravity.contains(Gravity::RIGHT) {
-        rect.x = rect.right() - width;
-    }
-    if gravity.contains(Gravity::BOTTOM) {
-        rect.y = rect.bottom() - height;
-    }
-
-    layout::Rect { width, height, ..rect }
 }

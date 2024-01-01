@@ -18,12 +18,13 @@ flexi_logger = "0.27.2"
 futures = "0.3.28"
 log = "0.4.20"
 notify = "6.1.1"
+num-traits = "0.2.17"
 ordered-float = "4.1.1"
 parking_lot = "0.12.1"
 plotters = "0.3.5"
-plotters-ratatui-backend = {version = "0.1.0", path = "../plotters-ratatui-backend"}
+plotters-ratatui-backend = {version = "0.1.1", features = ["widget"]}
 portrait = "0.3.0"
-ratatui = "0.24.0"
+ratatui = "0.25.0"
 serde = { version = "1.0.189", features = ["derive"] }
 serde_json = { version = "1.0.107", features = ["raw_value"] }
 tokio = { version = "1.33.0", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }

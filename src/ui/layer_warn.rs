@@ -7,8 +7,8 @@ use crossterm::event::{self, Event, KeyEvent};
 use ratatui::style::{Style, Stylize as _};
 use ratatui::{layout, text, widgets};
 
-use super::{rect_resize, Context, Gravity, HandleInput, LayerCommand, LayerTrait};
-use crate::ui::center_subrect;
+use super::{Context, HandleInput, LayerCommand, LayerTrait};
+use crate::util::{center_subrect, rect_resize, Gravity};
 
 #[derive(Default)]
 pub struct LayerWarn {
@@ -144,6 +144,7 @@ impl LayerTrait for LayerWarn {
         context: &mut Context,
         event: &Event,
         _layer_cmds: &mut Vec<LayerCommand>,
+        _frame_size: layout::Rect,
     ) -> Result<HandleInput> {
         Ok(match event {
             Event::Key(KeyEvent { code: event::KeyCode::Char('w'), .. }) => {
