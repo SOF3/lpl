@@ -15,21 +15,20 @@ impl<T, F: FnOnce(T) -> Result<()>> Drop for Finally<T, F> {
 }
 
 pub async fn some_or_pending<T>(option: &mut Option<impl Stream<Item = T> + Unpin>) -> T {
-    match option {
-        Some(stream) => {
-            let item = stream.next().await;
-            match item {
-                Some(item) => item,
-                None => {
-                    *option = None;
-                    pending().await
-                }
-            }
+    if let Some(stream) = option {
+        let item = stream.next().await;
+        if let Some(item) = item {
+            item
+        } else {
+            *option = None;
+            pending().await
         }
-        None => pending().await,
+    } else {
+        pending().await
     }
 }
 
+#[must_use]
 pub fn disp_float(value: f64, digits: u32) -> String {
     if value == 0.0 {
         return String::from("0");
@@ -47,6 +46,7 @@ pub fn disp_float(value: f64, digits: u32) -> String {
     }
 }
 
+#[must_use]
 pub fn center_subrect(rect: layout::Rect, ratio: (u16, u16)) -> layout::Rect {
     let center_x = (rect.left() + rect.right()) / 2;
     let center_y = (rect.top() + rect.bottom()) / 2;
@@ -59,6 +59,7 @@ pub fn center_subrect(rect: layout::Rect, ratio: (u16, u16)) -> layout::Rect {
     layout::Rect { x: new_left, y: new_top, width: new_width, height: new_height }
 }
 
+#[must_use]
 pub fn rect_resize(
     mut rect: layout::Rect,
     gravity: Gravity,
@@ -78,6 +79,7 @@ pub fn rect_resize(
     layout::Rect { width, height, ..rect }
 }
 
+#[must_use]
 pub fn rect_fit_inside(mut parent: layout::Rect, mut child: layout::Rect) -> layout::Rect {
     for [start, size] in [
         [|rect| &mut rect.x, |rect| &mut rect.width] as [fn(&mut layout::Rect) -> &mut u16; 2],
@@ -99,6 +101,7 @@ pub fn rect_fit_inside(mut parent: layout::Rect, mut child: layout::Rect) -> lay
     child
 }
 
+#[derive(Clone, Copy)]
 pub enum Direction {
     Left,
     Right,
@@ -117,6 +120,7 @@ bitflags::bitflags! {
 }
 
 impl Gravity {
+    #[must_use]
     pub fn move_to(self, dir: Direction) -> Self {
         match dir {
             Direction::Left => self & !Self::RIGHT,
@@ -134,6 +138,7 @@ pub struct AnchoredPosition {
 }
 
 impl AnchoredPosition {
+    #[must_use]
     pub fn to_rect(&self, width: u16, height: u16, parent: layout::Rect) -> layout::Rect {
         let mut rect = layout::Rect {
             x: if self.anchor.contains(Gravity::RIGHT) {
@@ -168,14 +173,15 @@ impl AnchoredPosition {
 
         if dir_is_positive == anchor_is_positive {
             // move towards displacement source, i.e. subtraction
-            displace.saturating_sub_assign(steps)
+            displace.saturating_sub_assign(steps);
         } else {
-            *displace += steps
+            *displace += steps;
         }
     }
 
     pub fn anchor_by_nearest(&mut self, width: u16, height: u16, parent: layout::Rect) {
         let child = self.to_rect(width, height, parent);
+        #[allow(clippy::type_complexity)]
         let dims: [(fn(layout::Rect) -> u16, fn(layout::Rect) -> u16, _, _); 2] = [
             ((|rect| rect.x), (|rect| rect.width), Gravity::RIGHT, &mut self.x_displace),
             (|rect| rect.y, |rect| rect.height, Gravity::BOTTOM, &mut self.y_displace),

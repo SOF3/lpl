@@ -84,15 +84,15 @@ impl LayerTrait for LayerWarn {
                 .collect();
 
             if text.is_empty() {
-                text.push(text::Line::styled("No warnings", Style::default().dim()))
+                text.push(text::Line::styled("No warnings", Style::default().dim()));
             }
 
             let mut border_style = Style::default().yellow();
             if visible.contains(VisibleReason::RECENT_WARNING) {
-                border_style = border_style.rapid_blink()
+                border_style = border_style.rapid_blink();
             }
             if visible.contains(VisibleReason::FOCUSED) {
-                border_style = border_style.on_black()
+                border_style = border_style.on_black();
             }
 
             let mut title = vec![text::Span::raw("Warnings")];
@@ -104,10 +104,10 @@ impl LayerTrait for LayerWarn {
                 title.push(text::Span::styled(
                     format!(" [{scroll_pos}/{scroll_size}]"),
                     Style::default().light_blue(),
-                ))
+                ));
             }
             if self.freeze.is_some() {
-                title.push(text::Span::styled(" [FROZEN]", Style::default().red()))
+                title.push(text::Span::styled(" [FROZEN]", Style::default().red()));
             }
 
             let rect = if self.zoomed {
@@ -116,7 +116,7 @@ impl LayerTrait for LayerWarn {
                 warn_rect(
                     frame.size(),
                     text.len(),
-                    text.iter().map(|line| line.width()).max().unwrap_or(0),
+                    text.iter().map(ratatui::text::Line::width).max().unwrap_or(0),
                 )
             };
 

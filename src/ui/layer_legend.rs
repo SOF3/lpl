@@ -188,7 +188,7 @@ impl LayerTrait for LayerLegend {
                             }
                         }
                     };
-                    series_names.get(new_index).map(|string| string.to_string())
+                    series_names.get(new_index).map(|string| (*string).to_string())
                 };
 
                 HandleInput::Consumed

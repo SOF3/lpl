@@ -135,7 +135,10 @@ impl<'t> Draw for DrawImpl<'t> {
 }
 
 impl LayerTrait for LayerChart {
+    #[allow(clippy::cast_sign_loss)]
     fn render(&mut self, context: &mut Context, frame: &mut ratatui::Frame) {
+        const SCROLL_DENOMINATOR: usize = 1000;
+
         let (now, data) = match &self.freeze {
             Some(freeze) => (freeze.frozen, &freeze.data),
             None => {
@@ -150,7 +153,7 @@ impl LayerTrait for LayerChart {
         let chart = PlottersWidget {
             draw:          DrawImpl { time, targets },
             error_handler: |err| {
-                context.warning_sender.clone().send(format!("Plotting error: {err:?}"))
+                context.warning_sender.clone().send(format!("Plotting error: {err:?}"));
             },
         };
         let rect = frame.size();
@@ -164,7 +167,6 @@ impl LayerTrait for LayerChart {
         let scroll_midpt_ratio = (context.options.data_backlog_duration.as_secs_f64()
             - x_midpt_display)
             / context.options.data_backlog_duration.as_secs_f64();
-        const SCROLL_DENOMINATOR: usize = 1000;
         let scroll_size = ((SCROLL_DENOMINATOR as f64) * scroll_interval_ratio) as usize;
         let scroll_position = ((SCROLL_DENOMINATOR as f64)
             * unlerp(
@@ -219,6 +221,7 @@ impl LayerTrait for LayerChart {
                 code: event::KeyCode::Char(key @ ('-' | '=' | 'h' | 'l' | 'H' | 'L')),
                 ..
             }) => {
+                #[allow(clippy::type_complexity)]
                 let (itv_fn, midpt_fn): (
                     fn(Duration) -> Duration,
                     fn(Duration, Duration) -> Duration,

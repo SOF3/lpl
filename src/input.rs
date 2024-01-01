@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::pin::Pin;
-use std::thread;
 use std::time::{Duration, SystemTime};
+use std::{fmt, thread};
 
 use anyhow::{Context as _, Result};
 use arcstr::ArcStr;
@@ -51,8 +51,7 @@ impl Options {
         }
 
         for path in &self.json_poll {
-            let worker =
-                json::open_poll(path.clone(), self.poll_period, &watcher, &input_send).await?;
+            let worker = json::open_poll(path.clone(), self.poll_period, &watcher, &input_send)?;
             workers.push((path, worker));
         }
 
@@ -68,7 +67,7 @@ impl Options {
         }
 
         Ok(Input {
-            input:          input_recv,
+            messages:       input_recv,
             warnings:       warn_recv,
             warning_sender: warnings,
         })
@@ -82,7 +81,7 @@ pub struct WarningSender {
 }
 
 impl WarningSender {
-    pub fn send(&mut self, message: String) {
+    pub fn send(&mut self, message: impl fmt::Display) {
         let _ = self.sender.try_send((SystemTime::now(), format!("{}{message}", &self.prefix)));
     }
 
@@ -92,7 +91,7 @@ impl WarningSender {
 }
 
 pub struct Input {
-    pub input:          mpsc::Receiver<Message>,
+    pub messages:       mpsc::Receiver<Message>,
     pub warnings:       mpsc::Receiver<(SystemTime, String)>,
     pub warning_sender: WarningSender,
 }

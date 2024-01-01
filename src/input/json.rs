@@ -32,7 +32,7 @@ pub async fn open(path: PathBuf, send: &mpsc::Sender<Message>) -> Result<WorkerB
     }))
 }
 
-pub async fn open_poll(
+pub fn open_poll(
     path: PathBuf,
     poll_period: Duration,
     notifier: &Notifier<impl notify::Watcher + Send + Sync + 'static>,
@@ -45,7 +45,7 @@ pub async fn open_poll(
     }
 
     let mut send = send.clone();
-    let mut watcher = notifier.watch(path.clone())?;
+    let mut watcher = notifier.watch(&path)?;
 
     Ok(Box::new(move |mut warnings, cancel| {
         Box::pin(async move {
@@ -53,9 +53,9 @@ pub async fn open_poll(
 
             loop {
                 select! {
-                    _ = cancel.cancelled().fuse() => break,
-                    _ = timer.tick().fuse() => {}
-                    _ = watcher.wait().fuse() => {}
+                    () = cancel.cancelled().fuse() => break,
+                    _ = timer.tick().fuse() => {},
+                    () = watcher.wait().fuse() => {},
                 }
 
                 if let Err(err) = read_once(&path, &mut send).await {

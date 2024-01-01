@@ -1,3 +1,6 @@
+#![warn(clippy::pedantic)]
+#![allow(clippy::cast_possible_truncation, clippy::cast_precision_loss, clippy::cast_possible_wrap)]
+
 use anyhow::{Context as _, Result};
 use clap::Parser as _;
 use flexi_logger::FileSpec;

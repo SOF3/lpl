@@ -1,5 +1,5 @@
 use std::collections::{hash_map, HashMap};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{self, AtomicU64};
 use std::sync::Arc;
 
@@ -43,26 +43,26 @@ struct PathSenders {
 }
 
 impl<W: notify::Watcher + Send + Sync + 'static> Notifier<W> {
-    pub fn watch(&self, path: PathBuf) -> Result<WatchHandle<W>> {
+    pub fn watch(&self, path: &Path) -> Result<WatchHandle<W>> {
         let id = WatcherId(self.watcher_id.fetch_add(1, atomic::Ordering::SeqCst));
         let (event_send, event_recv) = mpsc::channel(16);
 
         let handle = WatchHandle {
             id,
-            path: path.clone(),
+            path: path.to_owned(),
             senders: self.senders.clone(),
             watcher: self.watcher.clone(),
             events: Some(event_recv),
         };
 
         let mut all_senders = self.senders.write();
-        let path_entry = all_senders.paths.entry(path.clone());
+        let path_entry = all_senders.paths.entry(path.to_owned());
         let path_senders = match path_entry {
             hash_map::Entry::Occupied(entry) => entry.into_mut(),
             hash_map::Entry::Vacant(entry) => {
                 let mut watcher = self.watcher.lock();
                 watcher
-                    .watch(&path, notify::RecursiveMode::NonRecursive)
+                    .watch(path, notify::RecursiveMode::NonRecursive)
                     .with_context(|| format!("register watcher for {}", path.display()))?;
                 entry.insert(<_>::default())
             }

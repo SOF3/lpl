@@ -103,7 +103,7 @@ async fn main_loop(
     options: Options,
     cancel: CancellationToken,
     terminal: &mut Terminal<impl Backend>,
-    Input { mut input, warnings, warning_sender }: Input,
+    Input { messages: mut input, warnings, warning_sender }: Input,
 ) -> Result<()> {
     let mut events = {
         let (send, recv) = mpsc::unbounded();
@@ -145,7 +145,7 @@ async fn main_loop(
         }
 
         redraw = select! {
-            _ = context.cancel.cancelled().fuse() => return Ok(()),
+            () = context.cancel.cancelled().fuse() => return Ok(()),
             event = util::some_or_pending(&mut events).fuse() => {
                 for i in (0..layers.len()).rev() {
                     let layer = layers.get_mut(i).unwrap();
@@ -196,8 +196,8 @@ async fn main_loop(
                     last_message_redraw = Instant::now();
                     true
                 }
-            }
-            _ = time::sleep(redraw_freq).fuse() => true // ensure redraw as time elapses
+            },
+            () = time::sleep(redraw_freq).fuse() => true // ensure redraw as time elapses
         };
     }
 }
