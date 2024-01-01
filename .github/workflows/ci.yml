@@ -11,12 +11,9 @@ jobs:
     name: rustfmt check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          profile: default
-          default: true
           components: rustfmt
       - run: cargo fmt --all -- --check
       - uses: crate-ci/typos@master
@@ -24,24 +21,12 @@ jobs:
     name: clippy lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          profile: default
-          default: true
           components: clippy
-      - uses: actions/cache@v2
-        with:
-          path: |
-            /home/runner/.cargo
-            **/target
-          key: ${{ hashFiles('**/Cargo.lock') }}-cov
       - name: cargo clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          name: clippy
+        run: cargo clippy -- -Dclippy::all -Dclippy::pedantic
   build:
     name: build executable
     strategy:
@@ -49,12 +34,8 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{matrix.os}}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: default
-          default: true
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - uses: actions/upload-artifact@v4
         with:
