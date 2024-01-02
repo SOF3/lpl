@@ -2,6 +2,8 @@
 
 A command-line utility to plot charts from line-based inputs.
 
+[![](https://sof3.github.io/lpl/sinusoidal.gif)](examples/sinusoidal.tape)
+
 ## Example usage
 
 Plot new entries in `file.csv`,
