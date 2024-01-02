@@ -58,6 +58,7 @@ jobs:
     needs: [build-bin]
     steps:
       - uses: actions/checkout@v4
+      - uses: FedericoCarboni/setup-ffmpeg@v2
       - run: |
           mkdir /home/runner/bin
           wget -O /home/runner/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64
@@ -69,7 +70,7 @@ jobs:
         with:
           name: lpl-linux
           path: /home/runner/lpl
-      - run: ls -R /home/runner/lpl; mv /home/runner/{lpl,bin}/lpl
+      - run: mv /home/runner/{lpl,bin}/lpl && chmod +c /home/runner/bin/lpl
       - run: vhs examples/sinusoidal.tape
       - uses: actions/upload-artifact@v4
         with:
