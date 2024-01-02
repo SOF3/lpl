@@ -21,6 +21,11 @@ lpl \
 
 Download development builds:
 
-- Windows: [x86_64](https://sof3.github.io,lpl,lpl-windows/lpl.exe)
-- MacOS: [x86_64](https://sof3.github.io,lpl,lpl-macos/lpl)
-- Linux: [x86_64](https://sof3.github.io,lpl,lpl-linux/lpl)
+- Windows:
+  [x86\_64 (64-bit)](https://sof3.github.io/lpl/bin-x86_64-pc-windows-msvc/lpl.exe),
+  [32-bit](https://sof3.github.io/lpl/bin-i686-pc-windows-msvc/lpl.exe)
+- MacOS:
+  [x86\_64](https://sof3.github.io/lpl/bin-x86_64-apple-darwin/lpl)
+- Linux:
+  [x86\_64 GNU](https://sof3.github.io/lpl/bin-x86_64-unknown-linux-gnu/lpl),
+  [x86\_64 musl](https://sof3.github.io/lpl/bin-x86_64-unknown-linux-musl/lpl),

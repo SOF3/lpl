@@ -34,25 +34,25 @@ jobs:
         target:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
+          # - os: ubuntu-latest
+          #   target: aarch64-unknown-linux-gnu
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-musl
+          # - os: ubuntu-latest
+          #   target: aarch64-unknown-linux-musl
           - os: macos-latest
             target: x86_64-apple-darwin
-          - os: macos-latest
-            target: aarch64-apple-darwin
+          # - os: macos-latest
+          #   target: aarch64-apple-darwin
           - os: windows-latest
             target: i686-pc-windows-msvc
             suffix: .exe
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             suffix: .exe
-          - os: windows-latest
-            target: aarch64-pc-windows-msvc
-            suffix: .exe
+          # - os: windows-latest
+          #   target: aarch64-pc-windows-msvc
+          #   suffix: .exe
     runs-on: ${{matrix.target.os}}
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
       - run: cargo build --release --target ${{matrix.target.target}}
       - uses: actions/upload-artifact@v4
         with:
-          path: target/release/lpl${{matrix.target.suffix}}
+          path: target/${{matrix.target.target}}/release/lpl${{matrix.target.suffix}}
           name: bin-${{matrix.target.target}}
   vhs:
     name: record screencast
@@ -80,7 +80,7 @@ jobs:
           echo /home/runner/bin >>$GITHUB_PATH
       - uses: actions/download-artifact@v4
         with:
-          name: lpl-linux
+          name: bin-x86_64-unknown-linux-gnu
           path: /home/runner/lpl
       - run: mv /home/runner/{lpl,bin}/lpl && chmod +x /home/runner/bin/lpl
       - run: vhs examples/sinusoidal.tape
