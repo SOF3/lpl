@@ -76,3 +76,28 @@ jobs:
         with:
           path: target/sinusoidal.gif
           name: sinusoidal.gif
+  pages:
+    name: prepare GitHub pages
+    runs-on: [ubuntu-latest]
+    needs: [vhs, build-bin]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: /home/runner/pages
+          merge-multiple: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /home/runner/pages
+  deploy-pages:
+    name: deploy GitHub pages
+    runs-on: [ubuntu-latest]
+    permissions:
+      pages: write
+      id-token: write
+    needs: [pages]
+    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'ci-test')
+    concurrency:
+      group: gh-pages
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
