@@ -95,7 +95,7 @@ jobs:
       pages: write
       id-token: write
     needs: [pages]
-    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'ci-test')
+    if: github.event_name == 'push' && (github.ref_name == 'master' || github.ref_name == 'ci-test')
     concurrency:
       group: gh-pages
     steps:
