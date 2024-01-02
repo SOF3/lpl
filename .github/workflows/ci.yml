@@ -67,7 +67,6 @@ jobs:
           echo /home/runner/bin >>$GITHUB_PATH
       - uses: actions/download-artifact@v3
         with:
-          name: lpl-linux
           path: /home/runner/lpl
       - run: mv /home/runner/{lpl,bin}/lpl
       - run: vhs examples/sinusoidal.tape
