@@ -5,7 +5,7 @@ edition = "2021"
 license = "AGPL-3.0"
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.79"
 arcstr = "1.1.5"
 async-stream = "0.3.5"
 bitflags = "2.4.1"
