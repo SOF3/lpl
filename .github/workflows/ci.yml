@@ -65,8 +65,9 @@ jobs:
           wget -O /home/runner/vhs.tar.gz https://github.com/charmbracelet/vhs/releases/download/v0.7.1/vhs_0.7.1_Linux_x86_64.tar.gz
           (cd /home/runner/bin && tar xzf ../vhs.tar.gz)
           echo /home/runner/bin >>$GITHUB_PATH
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
+          name: lpl-linux
           path: /home/runner/lpl
       - run: ls -R /home/runner/lpl; mv /home/runner/{lpl,bin}/lpl
       - run: vhs examples/sinusoidal.tape
