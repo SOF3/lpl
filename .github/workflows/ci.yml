@@ -31,27 +31,39 @@ jobs:
     name: build binaries
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-    runs-on: ${{matrix.os}}
+        target:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            suffix: .exe
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: .exe
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            suffix: .exe
+    runs-on: ${{matrix.target.os}}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo build --release
+        with:
+          targets: ${{matrix.target.target}}
+      - run: cargo build --release --target ${{matrix.target.target}}
       - uses: actions/upload-artifact@v4
         with:
-          path: target/release/lpl.exe
-          name: lpl-windows
-        if: matrix.os == 'windows-latest'
-      - uses: actions/upload-artifact@v4
-        with:
-          path: target/release/lpl
-          name: lpl-linux
-        if: matrix.os == 'ubuntu-latest'
-      - uses: actions/upload-artifact@v4
-        with:
-          path: target/release/lpl
-          name: lpl-macos
-        if: matrix.os == 'macos-latest'
+          path: target/release/lpl${{matrix.target.suffix}}
+          name: bin-${{matrix.target.target}}
   vhs:
     name: record screencast
     runs-on: [ubuntu-latest]
