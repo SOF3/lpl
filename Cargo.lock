@@ -705,6 +705,7 @@ dependencies = [
  "plotters",
  "plotters-ratatui-backend",
  "portrait",
+ "rand",
  "ratatui",
  "serde",
  "serde_json",
@@ -892,6 +893,8 @@ checksum = "9e76628b4d3a7581389a35d5b6e2139607ad7c75b17aed325f210aa91f4a9609"
 [[package]]
 name = "plotters-ratatui-backend"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b4619a1189d6092d02f3e1ab978a202ea0a48b2d733bfc448d0b08f6e02adfe"
 dependencies = [
  "log",
  "plotters",

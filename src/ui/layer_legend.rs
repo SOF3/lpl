@@ -107,7 +107,7 @@ impl LayerTrait for LayerLegend {
     ) -> Result<HandleInput> {
         if self.changing_color {
             if let &Event::Key(KeyEvent {
-                code: event::KeyCode::Char(key @ ('r' | 'R' | 'g' | 'G' | 'b' | 'B')),
+                code: event::KeyCode::Char(key @ ('r' | 'R' | 'g' | 'G' | 'b' | 'B' | 'c')),
                 ..
             }) = event
             {
@@ -126,12 +126,15 @@ impl LayerTrait for LayerLegend {
                     .get_mut(name)
                     .expect("existing series name should have corresponding color entry");
                 match key {
-                    'r' => color[0].saturating_add_assign(5),
-                    'R' => color[0].saturating_sub_assign(5),
-                    'g' => color[1].saturating_add_assign(5),
-                    'G' => color[1].saturating_sub_assign(5),
-                    'b' => color[2].saturating_add_assign(5),
-                    'B' => color[2].saturating_sub_assign(5),
+                    'r' => color[0].saturating_add_assign(15),
+                    'R' => color[0].saturating_sub_assign(15),
+                    'g' => color[1].saturating_add_assign(15),
+                    'G' => color[1].saturating_sub_assign(15),
+                    'b' => color[2].saturating_add_assign(15),
+                    'B' => color[2].saturating_sub_assign(15),
+                    'c' => {
+                        *color = rand::random::<[u8; 3]>();
+                    }
                     _ => unreachable!(),
                 }
 

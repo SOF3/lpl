@@ -52,6 +52,7 @@ const HELP_INFO: &[(&str, &[(&str, &str)])] = &[
             ("c G", "Make series color less green"),
             ("c b", "Make series color more blue"),
             ("c B", "Make series color less blue"),
+            ("c c", "Change series color to another random color"),
         ],
     ),
 ];
