@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: ["master"]
+    branches: ["**"]
     tags: ["**"]
   pull_request:
     branches: ["**"]
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: /home/runner/lpl
-      - run: mv /home/runner/{lpl,bin}/lpl
+      - run: ls -R /home/runner/lpl; mv /home/runner/{lpl,bin}/lpl
       - run: vhs examples/sinusoidal.tape
       - uses: actions/upload-artifact@v4
         with:
