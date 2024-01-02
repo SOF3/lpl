@@ -70,7 +70,7 @@ jobs:
         with:
           name: lpl-linux
           path: /home/runner/lpl
-      - run: mv /home/runner/{lpl,bin}/lpl && chmod +c /home/runner/bin/lpl
+      - run: mv /home/runner/{lpl,bin}/lpl && chmod +x /home/runner/bin/lpl
       - run: vhs examples/sinusoidal.tape
       - uses: actions/upload-artifact@v4
         with:
