@@ -75,7 +75,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: target/sinusoidal.gif
-          name: sinusoidal.gif
+          name: sinusoidal
   pages:
     name: prepare GitHub pages
     runs-on: [ubuntu-latest]
@@ -84,7 +84,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: /home/runner/pages
-          merge-multiple: true
+      - run: mv {sinusoidal/,}sinusoidal.gif && rmdir sinusoidal
+        working-directory: /home/runner/pages
       - uses: actions/upload-pages-artifact@v3
         with:
           path: /home/runner/pages

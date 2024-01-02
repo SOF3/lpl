@@ -16,3 +16,11 @@ lpl \
   --json <(kubectl get replicaset -ojson -w | jq --unbuffered -c '{(.metadata.name): .status.replicas}') \
   --single-watch battery=/sys/class/power_supply/BAT0/capacity
 ```
+
+## Installation
+
+Download development builds:
+
+- Windows: [x86_64](https://sof3.github.io,lpl,lpl-windows/lpl.exe)
+- MacOS: [x86_64](https://sof3.github.io,lpl,lpl-macos/lpl)
+- Linux: [x86_64](https://sof3.github.io,lpl,lpl-linux/lpl)
