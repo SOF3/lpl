@@ -57,9 +57,10 @@ impl RenderTimeRange {
 }
 
 pub(super) struct DrawTarget {
-    pub(super) points: Vec<(f64, f64)>,
-    pub(super) color:  [u8; 3],
-    pub(super) label:  String,
+    pub(super) points:  Vec<(f64, f64)>,
+    pub(super) visible: bool,
+    pub(super) color:   [u8; 3],
+    pub(super) label:   String,
 }
 
 fn data_to_targets(cache: &Cache, data: &Freezable, time: RenderTimeRange) -> Vec<DrawTarget> {
@@ -67,12 +68,12 @@ fn data_to_targets(cache: &Cache, data: &Freezable, time: RenderTimeRange) -> Ve
         .iter()
         .map(|(label, series)| {
             (
-                *cache.colors.get(label).expect("series does not have corresponding color"),
+                cache.disp_config.get(label).expect("series does not have corresponding color"),
                 label,
                 series.data.iter().filter(|datum| time.abs_range().contains(&datum.time)),
             )
         })
-        .map(|(color, label, series)| {
+        .map(|(disp, label, series)| {
             let points = series
                 .map(|datum| {
                     let x = time
@@ -84,7 +85,7 @@ fn data_to_targets(cache: &Cache, data: &Freezable, time: RenderTimeRange) -> Ve
                     (-x, y)
                 })
                 .collect();
-            DrawTarget { points, color, label: label.clone() }
+            DrawTarget { points, visible: disp.visible, color: disp.color, label: label.clone() }
         })
         .collect()
 }
@@ -111,11 +112,15 @@ impl<'t> Draw for DrawImpl<'t> {
             .set_left_and_bottom_label_area_size(1)
             .build_cartesian_2d(x_range, y_range)?;
 
-        for &DrawTarget { ref points, color: [color_r, color_g, color_b], .. } in self.targets {
-            chart.draw_series(LineSeries::new(
-                points.iter().copied(),
-                RGBColor(color_r, color_g, color_b),
-            ))?;
+        for &DrawTarget { ref points, visible, color: [color_r, color_g, color_b], .. } in
+            self.targets
+        {
+            if visible {
+                chart.draw_series(LineSeries::new(
+                    points.iter().copied(),
+                    RGBColor(color_r, color_g, color_b),
+                ))?;
+            }
         }
 
         chart

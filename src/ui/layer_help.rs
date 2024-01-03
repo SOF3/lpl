@@ -46,6 +46,7 @@ const HELP_INFO: &[(&str, &[(&str, &str)])] = &[
             ("J", "Move window downwards"),
             ("k", "Focus on the previous series"),
             ("j", "Focus on the next series"),
+            ("SPACE", "Toggle series visibility"),
             ("c r", "Make series color more red"),
             ("c R", "Make series color less red"),
             ("c g", "Make series color more green"),

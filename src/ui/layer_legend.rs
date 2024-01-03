@@ -6,6 +6,7 @@ use ratatui::style::{Style, Stylize};
 use ratatui::text::Text;
 use ratatui::{layout, style, widgets};
 
+use super::data::DisplayConfig;
 use super::{Context, HandleInput, LayerCommand, LayerTrait};
 use crate::util::{
     self, disp_float, AnchoredPosition, Gravity, SaturatingAddExt, SaturatingSubExt,
@@ -49,6 +50,9 @@ impl LayerTrait for LayerLegend {
                 let mut base_style = Style::default();
                 if self.series_focus.as_ref().is_some_and(|name| name == &target.label) {
                     base_style = base_style.underlined();
+                }
+                if !target.visible {
+                    base_style = base_style.crossed_out().italic();
                 }
 
                 let row = widgets::Row::new([
@@ -120,9 +124,9 @@ impl LayerTrait for LayerLegend {
                     return Ok(HandleInput::Consumed);
                 };
 
-                let color = context
+                let DisplayConfig { color, .. } = context
                     .cache
-                    .colors
+                    .disp_config
                     .get_mut(name)
                     .expect("existing series name should have corresponding color entry");
                 match key {
@@ -161,6 +165,21 @@ impl LayerTrait for LayerLegend {
                 };
                 self.position.move_towards(dir, 5);
                 self.position.anchor_by_nearest(self.last_dim.0, self.last_dim.1, frame_size);
+                HandleInput::Consumed
+            }
+            &Event::Key(KeyEvent { code: event::KeyCode::Char(' '), .. }) => {
+                let Some(name) = self.series_focus.as_deref() else {
+                    context
+                        .warning_sender
+                        .send(String::from("Select a series with `j`/`k` to toggle visibility"));
+                    return Ok(HandleInput::Consumed);
+                };
+                let DisplayConfig { visible, .. } = context
+                    .cache
+                    .disp_config
+                    .get_mut(name)
+                    .expect("existing series name should have corresponding color entry");
+                *visible = !*visible;
                 HandleInput::Consumed
             }
             &Event::Key(KeyEvent { code: event::KeyCode::Char('c'), .. }) => {

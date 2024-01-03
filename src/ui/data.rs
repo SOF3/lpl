@@ -5,14 +5,21 @@ use crate::input;
 
 #[derive(Default)]
 pub struct Cache {
-    pub data:   Freezable,
-    pub colors: BTreeMap<String, [u8; 3]>,
-    color_pool: ColorPool,
+    pub data:        Freezable,
+    pub disp_config: BTreeMap<String, DisplayConfig>,
+    color_pool:      ColorPool,
+}
+
+pub struct DisplayConfig {
+    pub visible: bool,
+    pub color:   [u8; 3],
 }
 
 impl Cache {
     pub fn push_message(&mut self, message: input::Message) {
-        self.colors.entry(message.label.clone()).or_insert_with(|| self.color_pool.next());
+        self.disp_config
+            .entry(message.label.clone())
+            .or_insert_with(|| DisplayConfig { visible: true, color: self.color_pool.next() });
 
         let series =
             self.data.map.entry(message.label).or_insert_with(|| Series { data: VecDeque::new() });
