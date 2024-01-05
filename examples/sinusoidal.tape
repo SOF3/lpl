@@ -20,3 +20,7 @@ Sleep 2s
 Type "gjj"
 Type@500ms "cccccc"
 Sleep 1s
+Type@500ms " k"
+Sleep 1s
+Type @500ms "j "
+Sleep 1
