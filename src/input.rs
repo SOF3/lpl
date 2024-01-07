@@ -10,17 +10,26 @@ use futures::Future;
 use tokio::fs;
 use tokio_util::sync::CancellationToken;
 
-use crate::options;
+use self::notifier::open_poll;
+
+mod csv;
+mod json;
+
+mod notifier;
 
 #[derive(Debug, clap::Args)]
 #[group(id = "Inputs")]
 pub struct Options {
-    /// Read inputs from a CSV stream with an initial header line..
+    /// Read inputs from a CSV stream with an initial header line.
     #[clap(long)]
-    pub csv:       Vec<PathBuf>,
+    pub csv:                Vec<PathBuf>,
     /// Poll new changes from a CSV file periodically.
     #[clap(long)]
-    pub csv_poll:  Vec<options::Named<PathBuf>>,
+    pub csv_poll:           Vec<String>,
+    /// Delimiter used in CSV files
+    #[clap(long, default_value_t = ',')]
+    pub csv_poll_delimiter: char,
+
     /// Read inputs from a JSONLines stream.
     #[clap(long)]
     pub json:      Vec<PathBuf>,
@@ -47,12 +56,27 @@ impl Options {
             let worker = json::open(path.clone(), &input_send)
                 .await
                 .with_context(|| format!("open {}", path.display()))?;
-            workers.push((path, worker));
+            workers.push((path.clone(), worker));
         }
 
         for path in &self.json_poll {
-            let worker = json::open_poll(path.clone(), self.poll_period, &watcher, &input_send)?;
-            workers.push((path, worker));
+            let worker =
+                open_poll(path.clone(), self.poll_period, &watcher, &input_send, json::PollParser)?;
+            workers.push((path.clone(), worker));
+        }
+
+        for path in &self.csv {
+            let worker = csv::open(path, &input_send, self.csv_poll_delimiter)
+                .await
+                .with_context(|| format!("open {}", path.display()))?;
+            workers.push((path.clone(), worker));
+        }
+
+        for arg in &self.csv_poll {
+            let (path, parser) = csv::Parser::new(arg, self.csv_poll_delimiter)?;
+            let worker =
+                open_poll(path.to_path_buf(), self.poll_period, &watcher, &input_send, parser)?;
+            workers.push((path.to_path_buf(), worker));
         }
 
         for (path, worker) in workers {
@@ -105,11 +129,6 @@ pub struct Message {
 
 type WorkerBuilder = Box<dyn FnOnce(WarningSender, CancellationToken) -> Worker>;
 type Worker = Pin<Box<dyn Future<Output = Result<()>> + Send>>;
-
-// mod csv;
-mod json;
-
-mod notifier;
 
 /// Workaround for tokio workers unable to perform non-blocking reads on non-regular files.
 async fn thread_line_reader(

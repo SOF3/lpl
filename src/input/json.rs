@@ -1,16 +1,16 @@
 use std::fmt;
 use std::marker::PhantomData;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::result::Result as StdResult;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 use anyhow::{Context as _, Result};
 use futures::channel::mpsc;
-use futures::{select, FutureExt as _, SinkExt as _};
+use futures::{Future, SinkExt as _};
 use serde::{de, Deserialize};
-use tokio::{fs, time};
+use tokio::fs;
 
-use super::notifier::Notifier;
+use super::notifier::FieldParser;
 use super::{Message, WorkerBuilder};
 
 pub async fn open(path: PathBuf, send: &mpsc::Sender<Message>) -> Result<WorkerBuilder> {
@@ -19,6 +19,7 @@ pub async fn open(path: PathBuf, send: &mpsc::Sender<Message>) -> Result<WorkerB
 
     Ok(Box::new(move |mut warnings, cancel| {
         Box::pin(async move {
+            // TODO: support non-JSONLines streams of JSON objects
             let mut read = super::thread_line_reader(fd, cancel, warnings.clone()).await;
 
             while let Some((line, time)) = read.recv().await {
@@ -32,40 +33,17 @@ pub async fn open(path: PathBuf, send: &mpsc::Sender<Message>) -> Result<WorkerB
     }))
 }
 
-pub fn open_poll(
-    path: PathBuf,
-    poll_period: Duration,
-    notifier: &Notifier<impl notify::Watcher + Send + Sync + 'static>,
-    send: &mpsc::Sender<Message>,
-) -> Result<WorkerBuilder> {
-    async fn read_once(path: &Path, send: &mut mpsc::Sender<Message>) -> Result<()> {
-        let contents = fs::read_to_string(path).await.context("reading file contents")?;
-        let time = SystemTime::now();
-        send_fields(time, &contents, send).await.context("send fields")
+pub struct PollParser;
+
+impl FieldParser for PollParser {
+    fn parse(
+        &self,
+        time: SystemTime,
+        content: &str,
+        send: &mut mpsc::Sender<Message>,
+    ) -> impl Future<Output = Result<()>> + Send {
+        send_fields(time, content, send)
     }
-
-    let mut send = send.clone();
-    let mut watcher = notifier.watch(&path)?;
-
-    Ok(Box::new(move |mut warnings, cancel| {
-        Box::pin(async move {
-            let mut timer = time::interval(poll_period);
-
-            loop {
-                select! {
-                    () = cancel.cancelled().fuse() => break,
-                    _ = timer.tick().fuse() => {},
-                    () = watcher.wait().fuse() => {},
-                }
-
-                if let Err(err) = read_once(&path, &mut send).await {
-                    warnings.send(format!("{err:?}"));
-                }
-            }
-
-            Ok(())
-        })
-    }))
 }
 
 async fn send_fields(time: SystemTime, json: &str, send: &mut mpsc::Sender<Message>) -> Result<()> {

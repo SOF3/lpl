@@ -2,14 +2,17 @@ use std::collections::{hash_map, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{self, AtomicU64};
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 use anyhow::{Context as _, Result};
 use futures::channel::mpsc;
 use futures::future::FusedFuture;
-use futures::FutureExt as _;
+use futures::{select, Future, FutureExt as _};
+use notify::Watcher;
 use parking_lot::{Mutex, RwLock};
+use tokio::{fs, time};
 
-use super::WarningSender;
+use super::{Message, WarningSender, WorkerBuilder};
 use crate::util;
 
 pub fn start(
@@ -135,4 +138,54 @@ impl notify::EventHandler for Handler {
             Err(err) => self.warnings.send(format!("{err:?}")),
         }
     }
+}
+
+pub trait FieldParser: Send + Sync {
+    fn parse(
+        &self,
+        time: SystemTime,
+        content: &str,
+        send: &mut mpsc::Sender<Message>,
+    ) -> impl Future<Output = Result<()>> + Send;
+}
+
+pub fn open_poll(
+    path: PathBuf,
+    poll_period: Duration,
+    notifier: &Notifier<impl Watcher + Send + Sync + 'static>,
+    send: &mpsc::Sender<Message>,
+    parser: impl FieldParser + 'static,
+) -> Result<WorkerBuilder> {
+    async fn read_once(
+        path: &Path,
+        send: &mut mpsc::Sender<Message>,
+        parser: &impl FieldParser,
+    ) -> Result<()> {
+        let contents = fs::read_to_string(path).await.context("reading file contents")?;
+        let time = SystemTime::now();
+        parser.parse(time, &contents, send).await.context("send fields")
+    }
+
+    let mut send = send.clone();
+    let mut watcher = notifier.watch(&path)?;
+
+    Ok(Box::new(move |mut warnings, cancel| {
+        Box::pin(async move {
+            let mut timer = time::interval(poll_period);
+
+            loop {
+                select! {
+                    () = cancel.cancelled().fuse() => break,
+                    _ = timer.tick().fuse() => {},
+                    () = watcher.wait().fuse() => {},
+                }
+
+                if let Err(err) = read_once(&path, &mut send, &parser).await {
+                    warnings.send(format!("{err:?}"));
+                }
+            }
+
+            Ok(())
+        })
+    }))
 }
