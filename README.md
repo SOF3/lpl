@@ -120,7 +120,17 @@ Type `q` to quit.
 
 ## Installation
 
-Download development builds:
+### Compile from source
+
+Use `cargo install`:
+
+```sh
+cargo install lpl
+```
+
+### Development builds
+
+Download development builds built on GitHub CI:
 
 - Windows:
   [x86\_64 (64-bit)](https://sof3.github.io/lpl/bin-x86_64-pc-windows-msvc/lpl.exe),
