@@ -89,7 +89,7 @@ that contains a single JSON object (either compact or formatted),
 specified by `--json-poll PATH`.
 Similar to streaming JSON,
 only top-level fields with a single numeric value are processed.
-The file is reloaded when it is chnaged (where supported by inotify),
+The file is reloaded when it is changed (where supported by inotify),
 or every `--poll-period` seconds.
 
 #### CSV
