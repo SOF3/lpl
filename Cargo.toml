@@ -1,13 +1,15 @@
 [package]
 name = "lpl"
+authors = ["SOFe <sofe2038@gmail.com>"]
 version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0"
+repository = "https://github.com/SOF3/lpl"
+description = "A command-line utility to plot charts from line-based inputs."
 
 [dependencies]
 anyhow = "1.0.79"
 arcstr = "1.1.5"
-async-stream = "0.3.5"
 bitflags = "2.4.1"
 chrono = "0.4.31"
 clap = { version = "4.4.6", features = ["derive", "cargo"] }
@@ -19,7 +21,6 @@ futures = "0.3.28"
 log = "0.4.20"
 notify = "6.1.1"
 num-traits = "0.2.17"
-ordered-float = "4.1.1"
 parking_lot = "0.12.1"
 plotters = {version = "0.3.5", default-features = false, features = ["line_series"]}
 plotters-ratatui-backend = {version = "0.1.2", features = ["widget"]}

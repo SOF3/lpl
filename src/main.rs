@@ -24,6 +24,11 @@ async fn main() -> Result<()> {
     }
 
     let cancel = CancellationToken::new();
+    {
+        let cancel = cancel.clone();
+        _ = ctrlc::set_handler(move || cancel.cancel()); // do not error out if ctrlc cannot be handled
+    }
+
     let input = options.inputs.open(&cancel).await?;
     ui::run(options.ui, input, cancel.clone()).await?;
     cancel.cancel();
