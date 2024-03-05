@@ -23,7 +23,7 @@ notify = "6.1.1"
 num-traits = "0.2.18"
 parking_lot = "0.12.1"
 plotters = {version = "0.3.5", default-features = false, features = ["line_series"]}
-plotters-ratatui-backend = {version = "0.1.2", features = ["widget"]}
+plotters-ratatui-backend = {version = "0.1.3", features = ["widget"]}
 portrait = "0.3.0"
 rand = "0.8.5"
 ratatui = "0.25.0"
