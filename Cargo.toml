@@ -8,7 +8,7 @@ repository = "https://github.com/SOF3/lpl"
 description = "A command-line utility to plot charts from line-based inputs."
 
 [dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 arcstr = "1.1.5"
 bitflags = "2.4.2"
 chrono = "0.4.34"
