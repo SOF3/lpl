@@ -20,7 +20,7 @@ flexi_logger = "0.28.0"
 futures = "0.3.28"
 log = "0.4.21"
 notify = "6.1.1"
-num-traits = "0.2.18"
+num-traits = "0.2.19"
 parking_lot = "0.12.1"
 plotters = {version = "0.3.5", default-features = false, features = ["line_series"]}
 plotters-ratatui-backend = {version = "0.1.2", features = ["widget"]}
