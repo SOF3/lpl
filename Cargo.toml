@@ -9,7 +9,7 @@ description = "A command-line utility to plot charts from line-based inputs."
 
 [dependencies]
 anyhow = "1.0.83"
-arcstr = "1.1.5"
+arcstr = "1.2.0"
 bitflags = "2.5.0"
 chrono = "0.4.37"
 clap = { version = "4.5.4", features = ["derive", "cargo"] }
