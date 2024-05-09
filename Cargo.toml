@@ -30,4 +30,4 @@ ratatui = "0.25.0"
 serde = { version = "1.0.201", features = ["derive"] }
 serde_json = { version = "1.0.117", features = ["raw_value"] }
 tokio = { version = "1.37.0", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }
-tokio-util = "0.7.9"
+tokio-util = "0.7.11"
