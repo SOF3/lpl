@@ -16,7 +16,7 @@ clap = { version = "4.5.7", features = ["derive", "cargo"] }
 crossterm = "0.27.0"
 csv = "1.3.0"
 ctrlc = "3.4.4"
-flexi_logger = "0.28.0"
+flexi_logger = "0.28.3"
 futures = "0.3.28"
 log = "0.4.21"
 notify = "6.1.1"
