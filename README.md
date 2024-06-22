@@ -128,6 +128,14 @@ Use `cargo install`:
 cargo install lpl
 ```
 
+### AUR
+
+You can install `lpl` from the [AUR](https://aur.archlinux.org/packages/lpl) with using an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers).
+
+```bash
+paru -S lpl
+```
+
 ### Development builds
 
 Download development builds built on GitHub CI:
