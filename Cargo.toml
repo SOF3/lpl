@@ -10,7 +10,7 @@ description = "A command-line utility to plot charts from line-based inputs."
 [dependencies]
 anyhow = "1.0.86"
 arcstr = "1.2.0"
-bitflags = "2.5.0"
+bitflags = "2.6.0"
 chrono = "0.4.38"
 clap = { version = "4.5.9", features = ["derive", "cargo"] }
 crossterm = "0.27.0"
