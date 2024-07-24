@@ -26,7 +26,7 @@ plotters = {version = "0.3.6", default-features = false, features = ["line_serie
 plotters-ratatui-backend = {version = "0.1.2", features = ["widget"]}
 portrait = "0.3.0"
 rand = "0.8.5"
-ratatui = "0.25.0"
+ratatui = "0.27.0"
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.120", features = ["raw_value"] }
 tokio = { version = "1.39.1", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }
