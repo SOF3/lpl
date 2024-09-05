@@ -28,6 +28,6 @@ portrait = "0.3.0"
 rand = "0.8.5"
 ratatui = "0.25.0"
 serde = { version = "1.0.204", features = ["derive"] }
-serde_json = { version = "1.0.120", features = ["raw_value"] }
+serde_json = { version = "1.0.128", features = ["raw_value"] }
 tokio = { version = "1.39.1", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }
 tokio-util = "0.7.11"
