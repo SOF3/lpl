@@ -27,7 +27,7 @@ plotters-ratatui-backend = {version = "0.1.2", features = ["widget"]}
 portrait = "0.3.0"
 rand = "0.8.5"
 ratatui = "0.25.0"
-serde = { version = "1.0.209", features = ["derive"] }
+serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { version = "1.0.128", features = ["raw_value"] }
 tokio = { version = "1.40.0", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }
 tokio-util = "0.7.12"
