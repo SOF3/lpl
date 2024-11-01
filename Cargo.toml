@@ -19,7 +19,7 @@ ctrlc = "3.4.5"
 flexi_logger = "0.29.5"
 futures = "0.3.31"
 log = "0.4.22"
-notify = "6.1.1"
+notify = "7.0.0"
 num-traits = "0.2.19"
 parking_lot = "0.12.3"
 plotters = {version = "0.3.6", default-features = false, features = ["line_series"]}
