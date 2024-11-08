@@ -29,5 +29,5 @@ rand = "0.8.5"
 ratatui = "0.25.0"
 serde = { version = "1.0.214", features = ["derive"] }
 serde_json = { version = "1.0.132", features = ["raw_value"] }
-tokio = { version = "1.41.0", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }
+tokio = { version = "1.41.1", features = ["fs", "macros", "rt-multi-thread", "io-util", "time"] }
 tokio-util = "0.7.12"
