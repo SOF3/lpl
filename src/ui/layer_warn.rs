@@ -111,10 +111,10 @@ impl LayerTrait for LayerWarn {
             }
 
             let rect = if self.zoomed {
-                center_subrect(frame.size(), (8, 10))
+                center_subrect(frame.area(), (8, 10))
             } else {
                 warn_rect(
-                    frame.size(),
+                    frame.area(),
                     text.len(),
                     text.iter().map(ratatui::text::Line::width).max().unwrap_or(0),
                 )
@@ -133,7 +133,7 @@ impl LayerTrait for LayerWarn {
             let mut state = widgets::ScrollbarState::new(scroll_size).position(scroll_pos);
             frame.render_stateful_widget(
                 widgets::Scrollbar::new(widgets::ScrollbarOrientation::VerticalRight),
-                rect.inner(&layout::Margin { vertical: 1, horizontal: 0 }),
+                rect.inner(layout::Margin { vertical: 1, horizontal: 0 }),
                 &mut state,
             );
         }
@@ -186,7 +186,7 @@ impl LayerTrait for LayerWarn {
 }
 
 fn warn_rect(rect: layout::Rect, display_size: usize, max_width: usize) -> layout::Rect {
-    let inner = rect.inner(&layout::Margin { vertical: 3, horizontal: 5 });
+    let inner = rect.inner(layout::Margin { vertical: 3, horizontal: 5 });
     rect_resize(
         inner,
         Gravity::TOP | Gravity::RIGHT,

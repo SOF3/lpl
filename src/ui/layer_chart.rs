@@ -90,7 +90,7 @@ fn data_to_targets(cache: &Cache, data: &Freezable, time: RenderTimeRange) -> Ve
         .collect()
 }
 
-impl<'t> Draw for DrawImpl<'t> {
+impl Draw for DrawImpl<'_> {
     fn draw(&self, area: DrawingArea<RatatuiBackend, coord::Shift>) -> AreaResult {
         let global_y_extrema = self
             .targets
@@ -144,12 +144,11 @@ impl LayerTrait for LayerChart {
     fn render(&mut self, context: &mut Context, frame: &mut ratatui::Frame) {
         const SCROLL_DENOMINATOR: usize = 1000;
 
-        let (now, data) = match &self.freeze {
-            Some(freeze) => (freeze.frozen, &freeze.data),
-            None => {
-                context.cache.trim(SystemTime::now() - context.options.data_backlog_duration);
-                (SystemTime::now(), &context.cache.data)
-            }
+        let (now, data) = if let Some(freeze) = &self.freeze {
+            (freeze.frozen, &freeze.data)
+        } else {
+            context.cache.trim(SystemTime::now() - context.options.data_backlog_duration);
+            (SystemTime::now(), &context.cache.data)
         };
 
         let time = RenderTimeRange { now, since_start: self.x_start, since_end: self.x_end };
@@ -161,8 +160,8 @@ impl LayerTrait for LayerChart {
                 context.warning_sender.clone().send(format!("Plotting error: {err:?}"));
             },
         };
-        let rect = frame.size();
-        frame.render_widget(chart, rect.inner(&layout::Margin { vertical: 1, horizontal: 0 }));
+        let rect = frame.area();
+        frame.render_widget(chart, rect.inner(layout::Margin { vertical: 1, horizontal: 0 }));
 
         let x_start_display = self.x_start.min(context.options.data_backlog_duration);
         let x_midpt_display = ((x_start_display + self.x_end) / 2).as_secs_f64();

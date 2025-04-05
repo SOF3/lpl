@@ -30,7 +30,7 @@ pub struct Options {
     #[clap(long, default_value_t = ',')]
     pub csv_poll_delimiter: char,
 
-    /// Read inputs from a JSONLines stream.
+    /// Read inputs from a JSON Lines stream.
     #[clap(long)]
     pub json:      Vec<PathBuf>,
     /// Poll new changes from a JSON file periodically.

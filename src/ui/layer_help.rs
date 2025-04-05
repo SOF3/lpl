@@ -62,7 +62,7 @@ pub struct LayerHelp;
 
 impl LayerTrait for LayerHelp {
     fn render(&mut self, _context: &mut Context, frame: &mut ratatui::Frame) {
-        let rect = center_subrect(frame.size(), (7, 10));
+        let rect = center_subrect(frame.area(), (7, 10));
         frame.render_widget(widgets::Clear, rect);
         frame.render_widget(
             widgets::Table::default()

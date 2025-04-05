@@ -79,7 +79,7 @@ impl LayerTrait for LayerLegend {
         let rect = self.position.to_rect(
             table_width,
             table_height,
-            frame.size().inner(&layout::Margin { horizontal: 5, vertical: 2 }),
+            frame.area().inner(layout::Margin { horizontal: 5, vertical: 2 }),
         );
 
         let mut border_style = Style::default();
@@ -136,9 +136,7 @@ impl LayerTrait for LayerLegend {
                     'G' => color[1].saturating_sub_assign(15),
                     'b' => color[2].saturating_add_assign(15),
                     'B' => color[2].saturating_sub_assign(15),
-                    'c' => {
-                        *color = rand::random::<[u8; 3]>();
-                    }
+                    'c' => *color = rand::random::<[u8; 3]>(),
                     _ => unreachable!(),
                 }
 
