@@ -44,7 +44,7 @@ impl LayerTrait for LayerLegend {
             .filter_map(|target| {
                 let [color_r, color_g, color_b] = target.color;
 
-                let last_value = disp_float(target.points.iter().map(|&(_, y)| y).last()?, 4);
+                let last_value = disp_float(target.points.last().map(|&(_, y)| y)?, 4);
                 let widths = [target.label.len(), last_value.len()];
 
                 let mut base_style = Style::default();
